@@ -1,0 +1,63 @@
+{
+  "name": "prompt-library-chrome-extension",
+  "version": "1.4.0",
+  "description": "Personal prompt templates with dynamic variables and tone presets. Inject into ChatGPT.",
+  "main": "src/manifest.json",
+  "scripts": {
+    "build": "npm run build:prod",
+    "build:dev": "npm run copy-files",
+    "build:dev:clean": "npm run copy-files && npm run remove-comments",
+    "build:prod": "npm run copy-files && npm run minify",
+    "build:clean": "npm run copy-files && npm run remove-comments",
+    "copy-files": "node scripts/copy-files.js",
+    "minify": "node scripts/minify.js",
+    "remove-comments": "node scripts/remove-comments.js",
+    "lint": "eslint src/**/*.js",
+    "lint:fix": "eslint src/**/*.js --fix",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "zip": "node scripts/build-zip.js",
+    "clean": "rm -rf dist",
+    "dev": "npm run build:dev && npm run watch",
+    "watch": "nodemon --watch src --ext js,html,css --exec 'npm run build:dev'"
+  },
+  "keywords": [
+    "chrome-extension",
+    "chatgpt",
+    "prompt-templates",
+    "productivity",
+    "ai"
+  ],
+  "author": "Prompt Library Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "^7.28.3",
+    "@babel/preset-env": "^7.28.3",
+    "archiver": "^6.0.1",
+    "babel-jest": "^30.1.1",
+    "clean-css": "^5.3.3",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.1.3",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^30.1.1",
+    "nodemon": "^3.0.3",
+    "prettier": "^3.2.5",
+    "terser": "^5.27.0"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/prompt-library-chrome-extension.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/prompt-library-chrome-extension/issues"
+  },
+  "homepage": "https://github.com/your-username/prompt-library-chrome-extension#readme",
+  "dependencies": {
+    "fs-extra": "^11.3.1"
+  }
+}

@@ -1,0 +1,100 @@
+---
+alwaysApply: true
+---
+# AI_RULES.md
+
+## UNIVERSAL CODE QUALITY
+
+- MV3 only. No remote code, no `eval`, no inline event handlers.
+- DRY, KISS, YAGNI, SOLID. Prefer composition over inheritance.
+- Single source of truth for selectors and permissions. No hard-coded duplicates.
+- Functions ≤ 40 lines. Components/files with one clear responsibility.
+- Name things for intent: `injectToActiveTab`, `SAFE_SELECTORS`, not `doStuff`.
+
+## PERFORMANCE & RESOURCE USE
+
+- Load nothing until user opens the popup. No background worker by default.
+- Content script must be ≤ 10KB minified and idle unless explicitly messaged.
+- Query DOM once. Cache selectors. Use throttled observers if needed.
+- Avoid timers where possible. Prefer event-driven injection.
+- Batch `chrome.storage` reads/writes. Use `.sync` but guard for quotas.
+
+## SECURITY & PRIVACY
+
+- Principle of least privilege:
+  - `"permissions"` minimal: `storage`, `activeTab`, `scripting` only.
+  - `"host_permissions"` restricted to `https://chat.openai.com/*` and `https://chatgpt.com/*`.
+- Never send or store chat content outside the browser. No telemetry by default.
+- Respect site CSP. Do not inject remote assets/CDNs. All assets packaged.
+- Sanitize template variables before interpolation (stringify; no HTML injection).
+- No credentials or tokens in repo. Use `.gitignore` for local secrets.
+- Follow OpenAI/ChatGPT ToS. No automated mass requests.
+
+## TESTING & CI/CD
+
+- ESLint + Prettier for JS/HTML. Lint must pass before merge.
+- Unit tests: isolate logic (templating, variable fill, storage).
+- Integration tests: Puppeteer (or Playwright) against a local HTML fixture that mimics ChatGPT DOM, and gated e2e on real `chatgpt.com` behind a manual job.
+- ≥ 80% coverage before merge.
+- CI workflow:
+  - `npm ci`
+  - lint, test
+  - build zip (`zip -r prompt-lib.zip manifest.json popup.* options.* content.js inject.css icons/`)
+  - attach artifact
+- Keep a `CHANGELOG.md`. Bump `manifest.version` on every release.
+
+## DOCUMENTATION & DX
+
+- `README.md` must let a new dev run and load unpacked in < 2 minutes.
+- Explain selectors and how to update them in one place (`SAFE_SELECTORS`).
+- Document storage schema:
+  - `templates: Template[]`
+  - `vars: Record<string,string>`
+  - `tune: "neutral" | "concise" | "analytical" | "creative" | "developer"`
+  - `prefix: string`
+  - `autoSend: boolean`
+  - `lastTpl: string`
+- Provide copy-paste JSON examples for `variables` arrays in Options.
+- Comment *why* non-obvious decisions exist (e.g., direct `scripting.executeScript` vs `postMessage`).
+
+## UX & ACCESSIBILITY
+
+- Popup keyboard-first: Tab order logical, `label for` every input.
+- Minimum hit targets 40×40px. Clear focus rings. No hidden focus.
+- Live error messages (e.g., “ChatGPT textarea not found”).
+- Persist last selections across sessions.
+- Do not auto-send by default. Require explicit toggle.
+
+## COMMUNICATION CONVENTIONS
+
+- Ask ≤ 2 clarifying questions before implementing changes.
+- For multi-file edits, output a short plan and then fenced blocks with filenames.
+- Keep commit messages scoped: `feat(popup): dynamic variable inputs`, `fix(inject): broaden selector`.
+
+## OPERATIONAL & DEPLOYMENT
+
+- Icons present for 16/48/128. No missing paths in `manifest.json`.
+- Versioning: semver. Patch for bugfix, minor for features, major for breaking changes.
+- Zip only whitelisted files. Exclude tests, configs, node_modules unless required.
+- Brave support is mandatory. Validate on `brave://extensions` and `chrome://extensions`.
+
+## EXTENSION-SPECIFIC RULES
+
+- **Selectors** live in one object `SAFE_SELECTORS`. All DOM access goes through it.
+- **Injection** uses `chrome.scripting.executeScript` with explicit args. No global leaks.
+- **Options** manage templates; Popup never edits schema directly beyond `vars`.
+- **No background** service worker unless you add features that need it; document rationale.
+- **Error states**:
+  - No active tab → alert
+  - No textarea found → alert with the URL and quick “try refresh” hint
+  - Invalid variables JSON in Options → block save with clear error
+
+## SELF-CHECK BEFORE ANSWERING
+
+- [ ] Linter passes
+- [ ] Tests pass (unit + integration)
+- [ ] No hard-coded secrets or remote assets
+- [ ] Permissions and host_permissions are minimal
+- [ ] Performance: no polling; observers/throttles used where needed
+- [ ] UX states handled: loading, empty, error
+- [ ] Works on Chrome and Brave (manual spot check)

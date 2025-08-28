@@ -1,0 +1,152 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Prompt Library</title>
+  <style>
+    :root{
+      --bd: #e5e7eb;
+      --fg: #111;
+      --muted: #666;
+      --pri: #2f6feb;
+      --success: #10b981;
+      --error: #ef4444;
+      --info: #3b82f6;
+    }
+    
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
+    
+    body {
+      margin: 12px;
+      color: var(--fg);
+      width: 360px;
+    }
+    
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .grid {
+      display: grid;
+      gap: 8px;
+    }
+    
+    select, input, button {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid var(--bd);
+      border-radius: 10px;
+      background: #fff;
+    }
+    
+    label {
+      font-size: 12px;
+      margin-left: 2px;
+      color: #333;
+    }
+    
+    .btn {
+      cursor: pointer;
+    }
+    
+    .btn.primary {
+      border-color: var(--pri);
+    }
+    
+    .muted {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    
+    .card {
+      border: 1px solid var(--bd);
+      border-radius: 14px;
+      padding: 10px;
+    }
+    
+    .title {
+      font-weight: 600;
+    }
+    
+    .end {
+      justify-content: space-between;
+    }
+    
+    .pill {
+      padding: 6px 10px;
+      border-radius: 999px;
+      width: auto;
+    }
+    
+    .status {
+      font-size: 12px;
+      color: var(--muted);
+      min-height: 16px;
+    }
+    
+    .status-success {
+      color: var(--success);
+    }
+    
+    .status-error {
+      color: var(--error);
+    }
+    
+    .status-info {
+      color: var(--info);
+    }
+  </style>
+</head>
+<body>
+  <div class="row">
+    <select id="templateSelect"></select>
+    <button id="openOptions" class="btn" style="width:auto">Manage</button>
+  </div>
+
+  <div class="card grid">
+    <div class="title">Variables</div>
+    <div id="vars" class="grid"></div>
+  </div>
+
+  <div class="row">
+    <select id="tune">
+      <option value="neutral">TUNE: Neutral</option>
+      <option value="concise">TUNE: Concise</option>
+      <option value="analytical">TUNE: Analytical</option>
+      <option value="creative">TUNE: Creative</option>
+      <option value="developer">TUNE: Developer</option>
+    </select>
+  </div>
+
+  <div class="row">
+    <input id="prefix" placeholder="Optional prefix (system/meta)"/>
+  </div>
+
+  <div class="row end">
+    <label><input type="checkbox" id="autoSend"/> Auto-send</label>
+    <button id="preview" class="btn pill">Preview</button>
+  </div>
+
+  <div class="row">
+    <button id="inject" class="btn primary">Inject into ChatGPT</button>
+  </div>
+
+  <div class="row end">
+    <button id="testInjection" class="btn pill">Test</button>
+    <label><input type="checkbox" id="debugMode"/> Debug mode</label>
+    <label><input type="checkbox" id="hideBadge"/> Hide badge</label>
+    <span id="status" class="status">Ready</span>
+  </div>
+
+  <p class="muted">Select template, fill fields, inject.</p>
+  
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

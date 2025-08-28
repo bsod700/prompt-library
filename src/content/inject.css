@@ -1,0 +1,39 @@
+/* Prompt Library Content Script Styles */
+
+/* Badge styling */
+#prompt-lib-badge {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #2f6feb;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 500;
+  z-index: 10000;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  opacity: 0.8;
+  transition: opacity 0.2s;
+  pointer-events: none;
+  max-width: 150px;
+  word-wrap: break-word;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+#prompt-lib-badge:hover {
+  opacity: 1;
+}
+
+/* Ready state indicator */
+.prompt-lib-ready {
+  /* This class is added to body when ChatGPT is ready */
+}
+
+/* Ensure badge doesn't interfere with ChatGPT UI */
+#prompt-lib-badge {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
