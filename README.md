@@ -10,14 +10,20 @@ A simple Chrome extension that helps you save and use your favorite ChatGPT prom
    - Click the green "Code" button above and select "Download ZIP"
    - Extract the ZIP file to a folder on your computer
 
-2. **Install in Chrome**
+2. **Build the Extension**
+   - Open a terminal/command prompt in the extracted folder
+   - Run `npm install` to install dependencies
+   - Run `npm run build` to build the extension
+   - This creates a `dist` folder with the extension files
+
+3. **Install in Chrome**
    - Open Chrome and type `chrome://extensions/` in the address bar
    - Turn on "Developer mode" (toggle in top right corner)
    - Click "Load unpacked"
-   - Select the folder you extracted (make sure it contains `manifest.json`)
+   - **Important**: Select the `dist` folder (not the main project folder)
    - You should see "Prompt Library" appear in your extensions list
 
-3. **Start Using**
+4. **Start Using**
    - Go to [ChatGPT](https://chat.openai.com) or [chatgpt.com](https://chatgpt.com)
    - Click the Prompt Library icon in your Chrome toolbar
    - Select a template and fill in the details
