@@ -12,6 +12,18 @@ import { STORAGE_KEYS, DEFAULT_TEMPLATES } from '../constants/schema.js';
 import { validateTemplate } from '../utils/template.js';
 
 /**
+ * Generate a UUID v4 fallback if crypto.randomUUID is not available
+ * @returns {string} - Generated UUID
+ */
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+/**
  * Get all templates from storage
  * @returns {Promise<Array>} - Array of template objects
  */
@@ -80,16 +92,15 @@ export async function getTemplateById(templateId) {
  */
 export async function addTemplate(template) {
   try {
-    const validation = validateTemplate(template);
-    if (!validation.isValid) {
-      throw new Error(`Invalid template: ${validation.errors.join(', ')}`);
-    }
+    console.log('addTemplate called with:', template);
     
     const templates = await getTemplates();
+    console.log('Current templates:', templates);
     
     // Generate unique ID if not provided
     if (!template.id) {
-      template.id = crypto.randomUUID();
+      template.id = crypto.randomUUID ? crypto.randomUUID() : generateUUID();
+      console.log('Generated ID:', template.id);
     }
     
     // Check for duplicate ID
@@ -102,9 +113,18 @@ export async function addTemplate(template) {
       throw new Error(`Template with name "${template.name}" already exists`);
     }
     
+    // Validate template after ID is generated
+    const validation = validateTemplate(template);
+    console.log('Validation result:', validation);
+    
+    if (!validation.isValid) {
+      throw new Error(`Invalid template: ${validation.errors.join(', ')}`);
+    }
+    
     templates.push(template);
     await saveTemplates(templates);
     
+    console.log('Template saved successfully');
     return template;
   } catch (error) {
     console.error('Failed to add template:', error);
@@ -192,7 +212,7 @@ export async function duplicateTemplate(templateId) {
     
     const duplicatedTemplate = {
       ...originalTemplate,
-      id: crypto.randomUUID(),
+      id: crypto.randomUUID ? crypto.randomUUID() : generateUUID(),
       name: `${originalTemplate.name} (Copy)`
     };
     
@@ -253,7 +273,7 @@ export async function importTemplates(jsonString) {
     // Generate new IDs for imported templates to avoid conflicts
     const importedTemplates = templates.map(template => ({
       ...template,
-      id: crypto.randomUUID()
+      id: crypto.randomUUID ? crypto.randomUUID() : generateUUID()
     }));
     
     // Save imported templates

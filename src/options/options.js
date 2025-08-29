@@ -157,13 +157,19 @@ class OptionsController {
    */
   async addNewTemplate() {
     try {
+      console.log('Adding new template...');
+      
       const newTemplate = {
         name: 'New Template',
-        body: '',
+        body: 'Enter your template here with {{variables}}',
         variables: []
       };
       
+      console.log('New template object:', newTemplate);
+      
       const addedTemplate = await addTemplate(newTemplate);
+      console.log('Template added successfully:', addedTemplate);
+      
       this.templates.push(addedTemplate);
       this.renderTemplates();
       

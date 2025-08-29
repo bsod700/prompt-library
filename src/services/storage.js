@@ -3,7 +3,7 @@
  * Handles all chrome.storage.sync operations with proper error handling
  */
 
-import { STORAGE_KEYS, DEFAULT_STORAGE } from '../constants/schema.js';
+import { STORAGE_KEYS, DEFAULT_STORAGE, DEFAULT_TEMPLATES } from '../constants/schema.js';
 
 /**
  * Get a single value from storage
@@ -148,6 +148,15 @@ export async function initializeStorage() {
     
     if (!hasTemplates) {
       await setStorageValue(STORAGE_KEYS.TEMPLATES, DEFAULT_STORAGE[STORAGE_KEYS.TEMPLATES]);
+    } else {
+      // Merge in any new default templates that are missing (by id)
+      const existingTemplates = state[STORAGE_KEYS.TEMPLATES] || [];
+      const existingIds = new Set(existingTemplates.map(t => t.id));
+      const missingDefaults = (DEFAULT_TEMPLATES || []).filter(t => !existingIds.has(t.id));
+      if (missingDefaults.length > 0) {
+        const merged = [...existingTemplates, ...missingDefaults];
+        await setStorageValue(STORAGE_KEYS.TEMPLATES, merged);
+      }
     }
   } catch (error) {
     console.error('Failed to initialize storage:', error);
