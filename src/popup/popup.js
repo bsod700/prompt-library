@@ -189,9 +189,14 @@ class PopupController {
       const wrapper = document.createElement('div');
       wrapper.className = 'grid';
       
+      const isSelect = variable.type === 'select' && Array.isArray(variable.options) && variable.options.length > 0;
+      const fieldHtml = isSelect
+        ? `<select id="${id}">` + variable.options.map(opt => `<option value="${this.escape(opt)}">${this.escape(opt)}</option>`).join('') + `</select>`
+        : `<input id="${id}" placeholder="${(variable.placeholder || variable.label || variable.key) || ''}">`;
+
       wrapper.innerHTML = `
         <label for="${id}">${variable.label || variable.key}</label>
-        <input id="${id}" placeholder="${variable.placeholder || variable.label || variable.key}">
+        ${fieldHtml}
       `;
       
       this.elements.vars.appendChild(wrapper);
@@ -202,6 +207,13 @@ class PopupController {
         input.value = storedVars[variable.key];
       }
     });
+  }
+
+  // Escape helper for option text
+  escape(text) {
+    const div = document.createElement('div');
+    div.textContent = String(text ?? '');
+    return div.innerHTML;
   }
 
   /**

@@ -5,11 +5,12 @@
   "main": "src/manifest.json",
   "scripts": {
     "build": "npm run build:prod",
-    "build:dev": "npm run copy-files",
-    "build:dev:clean": "npm run copy-files && npm run remove-comments",
-    "build:prod": "npm run copy-files && npm run minify",
+    "build:dev": "npm run copy-files && npm run compile-scss && npm run remove-comments",
+    "build:dev:clean": "npm run copy-files && npm run compile-scss && npm run remove-comments",
+    "build:prod": "npm run copy-files && npm run compile-scss && npm run minify",
     "build:clean": "npm run copy-files && npm run remove-comments",
     "copy-files": "node scripts/copy-files.js",
+    "compile-scss": "node scripts/compile-scss.js",
     "minify": "node scripts/minify.js",
     "remove-comments": "node scripts/remove-comments.js",
     "lint": "eslint src/**/*.js",
@@ -19,7 +20,7 @@
     "zip": "node scripts/build-zip.js",
     "clean": "rm -rf dist",
     "dev": "npm run build:dev && npm run watch",
-    "watch": "nodemon --watch src --ext js,html,css --exec 'npm run build:dev'"
+    "watch": "nodemon --watch src --ext js,html,css,scss --exec 'npm run build:dev'"
   },
   "keywords": [
     "chrome-extension",
@@ -43,6 +44,7 @@
     "jest-environment-jsdom": "^30.1.1",
     "nodemon": "^3.0.3",
     "prettier": "^3.2.5",
+    "sass": "^1.91.0",
     "terser": "^5.27.0"
   },
   "engines": {

@@ -12,18 +12,20 @@
   font-size: 11px;
   font-weight: 500;
   z-index: 10000;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   opacity: 0.8;
   transition: opacity 0.2s;
   pointer-events: none;
   max-width: 150px;
   word-wrap: break-word;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+
+  &:hover {
+    opacity: 1;
+  }
 }
 
-#prompt-lib-badge:hover {
-  opacity: 1;
-}
+
 
 /* Ready state indicator */
 .prompt-lib-ready {

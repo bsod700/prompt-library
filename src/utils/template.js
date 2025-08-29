@@ -105,6 +105,18 @@ export function validateTemplate(template) {
         errors.push(`Variable at index ${index} must be an object`);
       } else if (!variable.key || typeof variable.key !== 'string') {
         errors.push(`Variable at index ${index} must have a valid string key`);
+      } else {
+        // Optional fields validation
+        if (variable.type && !['text', 'select'].includes(variable.type)) {
+          errors.push(`Variable "${variable.key}" has invalid type (expected 'text' or 'select')`);
+        }
+        if (variable.type === 'select') {
+          if (!Array.isArray(variable.options)) {
+            errors.push(`Variable "${variable.key}" options must be an array when type is 'select'`);
+          } else if (!variable.options.every(opt => typeof opt === 'string')) {
+            errors.push(`Variable "${variable.key}" options must be strings`);
+          }
+        }
       }
     });
   }

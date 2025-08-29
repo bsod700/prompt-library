@@ -18,8 +18,10 @@ async function copyFiles() {
     await fs.remove(DIST_DIR);
     await fs.ensureDir(DIST_DIR);
     
-    // Copy source files
-    await fs.copy(SRC_DIR, DIST_DIR);
+    // Copy source files, excluding SCSS (compiled separately)
+    await fs.copy(SRC_DIR, DIST_DIR, {
+      filter: (src) => !src.endsWith('.scss')
+    });
     
     // Copy icons directory
     if (await fs.pathExists('icons')) {

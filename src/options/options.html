@@ -4,195 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Prompt Library – Manage</title>
-  <style>
-    :root{
-      --bd: #e5e7eb;
-      --fg: #111;
-      --muted: #666;
-      --pri: #2f6feb;
-      --success: #10b981;
-      --error: #ef4444;
-      --info: #3b82f6;
-    }
-    
-    * {
-      box-sizing: border-box;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-    }
-    
-    body {
-      margin: 16px;
-      max-width: 980px;
-      color: var(--fg);
-    }
-    
-    h1 {
-      color: var(--pri);
-      margin-bottom: 24px;
-    }
-    
-    .row {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-    }
-    
-    .btn {
-      padding: 8px 16px;
-      border: 1px solid var(--bd);
-      border-radius: 8px;
-      background: #fff;
-      cursor: pointer;
-      font-size: 14px;
-      transition: all 0.2s;
-    }
-    
-    .btn:hover {
-      background: #f9fafb;
-      border-color: var(--pri);
-    }
-    
-    .btn-duplicate {
-      background: var(--info);
-      color: white;
-      border-color: var(--info);
-      margin-right: 8px;
-    }
-    
-    .btn-duplicate:hover {
-      background: #2563eb;
-    }
-    
-    .btn-delete {
-      background: var(--error);
-      color: white;
-      border-color: var(--error);
-    }
-    
-    .btn-delete:hover {
-      background: #dc2626;
-    }
-    
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 16px;
-      background: white;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    
-    th, td {
-      border: 1px solid var(--bd);
-      padding: 12px;
-      vertical-align: top;
-      text-align: left;
-    }
-    
-    th {
-      background: #f9fafb;
-      font-weight: 600;
-      color: var(--fg);
-    }
-    
-    input, textarea {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid var(--bd);
-      border-radius: 6px;
-      font-size: 14px;
-      transition: border-color 0.2s;
-    }
-    
-    input:focus, textarea:focus {
-      outline: none;
-      border-color: var(--pri);
-    }
-    
-    textarea {
-      height: 90px;
-      resize: vertical;
-      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-      font-size: 13px;
-    }
-    
-    .muted {
-      font-size: 12px;
-      color: var(--muted);
-      margin-bottom: 16px;
-    }
-    
-    .variable-help {
-      margin-top: 4px;
-      font-size: 11px;
-      color: var(--muted);
-    }
-    
-    .status {
-      font-size: 14px;
-      padding: 8px 12px;
-      border-radius: 6px;
-      margin-left: 8px;
-      min-width: 200px;
-    }
-    
-    .status-info {
-      background: #dbeafe;
-      color: #1e40af;
-    }
-    
-    .status-success {
-      background: #d1fae5;
-      color: #065f46;
-    }
-    
-    .status-error {
-      background: #fee2e2;
-      color: #991b1b;
-    }
-    
-    #importFile {
-      border: 2px dashed var(--bd);
-      padding: 16px;
-      text-align: center;
-      cursor: pointer;
-      border-radius: 8px;
-      transition: border-color 0.2s;
-    }
-    
-    #importFile:hover {
-      border-color: var(--pri);
-    }
-    
-    .file-input-wrapper {
-      position: relative;
-      display: inline-block;
-    }
-    
-    .file-input-wrapper input[type=file] {
-      position: absolute;
-      left: -9999px;
-    }
-    
-    .file-input-label {
-      display: inline-block;
-      padding: 8px 16px;
-      border: 1px solid var(--bd);
-      border-radius: 8px;
-      background: #fff;
-      cursor: pointer;
-      font-size: 14px;
-      transition: all 0.2s;
-    }
-    
-    .file-input-label:hover {
-      background: #f9fafb;
-      border-color: var(--pri);
-    }
-  </style>
+  <link rel="stylesheet" href="options.css"/>
 </head>
 <body>
   <h1>Prompt Library - Template Management</h1>
@@ -209,7 +21,7 @@
   </div>
   
   <p class="muted">
-    Variables = JSON array, e.g. [{"key":"topic","label":"Topic"},{"key":"audience","label":"Audience"}]
+    Variables are managed in the modal. The old JSON column is now informational.
   </p>
 
   <table>
@@ -223,6 +35,44 @@
     </thead>
     <tbody id="rows"></tbody>
   </table>
+
+  <!-- Modal: Template Editor -->
+  <div id="tplModal" class="modal" aria-hidden="true">
+    <div id="tplModalBackdrop" class="modal__backdrop"></div>
+    <div class="modal__dialog">
+      <div class="modal__header">
+        <h2 class="modal__title">Edit Template</h2>
+        <button id="tplModalClose" class="btn" aria-label="Close">Close</button>
+      </div>
+      <div class="modal__body">
+        <div class="row">
+          <div style="flex:1;">
+            <label for="tplName">Name</label>
+            <input id="tplName" placeholder="Template name"/>
+          </div>
+        </div>
+        <div class="row">
+          <div style="flex:1;">
+            <label for="tplBody">Body</label>
+            <textarea id="tplBody" placeholder="Write your prompt body with {{variables}}"></textarea>
+            <div class="variable-help"><small>Type {{variable}} to add variables. They appear below.</small></div>
+          </div>
+        </div>
+        <div class="row" style="align-items:flex-start;">
+          <div style="flex:1;">
+            <label>Variables</label>
+            <div id="tplVars" style="display:flex; flex-direction:column; gap:12px;"></div>
+            <div class="variable-help"><small>Each variable can be a free text or a select with predefined options.</small></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal__footer">
+        <button id="tplDelete" class="btn btn-delete">Delete</button>
+        <button id="tplCancel" class="btn">Cancel</button>
+        <button id="tplSave" class="btn btn-duplicate" style="margin-right:0;">Save</button>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="options.js"></script>
 </body>

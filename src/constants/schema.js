@@ -19,7 +19,10 @@ export const TEMPLATE_SCHEMA = {
 export const VARIABLE_SCHEMA = {
   key: 'string',          // Variable key (e.g., "topic")
   label: 'string',        // Display label (e.g., "Topic")
-  placeholder: 'string'   // Optional placeholder text
+  placeholder: 'string',  // Optional placeholder text
+  // New optional fields to support richer variable inputs in UI
+  type: 'string',         // Optional: 'text' | 'select' (defaults to 'text')
+  options: 'array'        // Optional: string[] when type === 'select'
 };
 
 /**

@@ -13,6 +13,7 @@ import {
   importTemplates,
   resetToDefaults 
 } from '../services/templateManager.js';
+import { extractVariableKeys } from '../utils/template.js';
 
 /**
  * Options controller class
@@ -21,6 +22,12 @@ class OptionsController {
   constructor() {
     this.templates = [];
     this.elements = {};
+    this.modal = {
+      isOpen: false,
+      index: null,
+      tmpl: null,
+      varsByKey: {}
+    };
     
     this.initializeElements();
     this.bindEvents();
@@ -37,7 +44,17 @@ class OptionsController {
       importFile: document.getElementById('importFile'),
       reset: document.getElementById('reset'),
       rows: document.getElementById('rows'),
-      status: document.getElementById('status')
+      status: document.getElementById('status'),
+      // Modal elements
+      modal: document.getElementById('tplModal'),
+      modalBackdrop: document.getElementById('tplModalBackdrop'),
+      modalClose: document.getElementById('tplModalClose'),
+      modalName: document.getElementById('tplName'),
+      modalBody: document.getElementById('tplBody'),
+      modalVars: document.getElementById('tplVars'),
+      modalSave: document.getElementById('tplSave'),
+      modalCancel: document.getElementById('tplCancel'),
+      modalDelete: document.getElementById('tplDelete')
     };
   }
 
@@ -67,14 +84,32 @@ class OptionsController {
       });
     }
 
-    // Template row events (delegated)
-    this.elements.rows.addEventListener('input', (event) => {
-      this.handleTemplateInput(event);
+    // Template row actions and open modal on row click
+    this.elements.rows.addEventListener('click', (event) => {
+      const action = event.target?.dataset?.action;
+      if (action === 'delete' || action === 'duplicate') {
+        this.handleTemplateAction(event);
+        return;
+      }
+      const tr = event.target.closest('tr');
+      if (!tr) return;
+      const index = parseInt(tr.dataset.index);
+      if (!isNaN(index)) {
+        this.openTemplateModal(index);
+      }
     });
 
-    this.elements.rows.addEventListener('click', (event) => {
-      this.handleTemplateAction(event);
-    });
+    // Modal controls
+    if (this.elements.modalClose) this.elements.modalClose.addEventListener('click', () => this.closeTemplateModal());
+    if (this.elements.modalCancel) this.elements.modalCancel.addEventListener('click', () => this.closeTemplateModal());
+    if (this.elements.modalBackdrop) this.elements.modalBackdrop.addEventListener('click', () => this.closeTemplateModal());
+    if (this.elements.modalSave) this.elements.modalSave.addEventListener('click', () => this.saveTemplateFromModal());
+    if (this.elements.modalDelete) this.elements.modalDelete.addEventListener('click', () => this.deleteTemplateFromModal());
+
+    // Body change -> refresh variable list
+    if (this.elements.modalBody) {
+      this.elements.modalBody.addEventListener('input', () => this.refreshModalVariables());
+    }
   }
 
   /**
@@ -113,39 +148,15 @@ class OptionsController {
     row.dataset.index = index;
     row.dataset.templateId = template.id;
     
+    const bodyPreview = (template.body || '').trim().split('\n').slice(0, 2).join(' ').slice(0, 120);
+    const varCount = (template.variables || []).length;
     row.innerHTML = `
+      <td>${this.escapeHtml(template.name || '')}</td>
+      <td><div class="muted">${this.escapeHtml(bodyPreview)}</div></td>
+      <td>${varCount} variable${varCount === 1 ? '' : 's'}</td>
       <td>
-        <input 
-          value="${this.escapeHtml(template.name || '')}" 
-          data-field="name" 
-          data-index="${index}"
-          placeholder="Template name"
-        />
-      </td>
-      <td>
-        <textarea 
-          data-field="body" 
-          data-index="${index}"
-          placeholder="Template body with {{variables}}"
-        >${this.escapeHtml(template.body || '')}</textarea>
-      </td>
-      <td>
-        <textarea 
-          data-field="variables" 
-          data-index="${index}"
-          placeholder='[{"key":"topic","label":"Topic"}]'
-        >${this.escapeHtml(JSON.stringify(template.variables || [], null, 2))}</textarea>
-        <div class="variable-help">
-          <small>Variables = JSON array, e.g. [{"key":"topic","label":"Topic"}]</small>
-        </div>
-      </td>
-      <td>
-        <button class="btn btn-duplicate" data-action="duplicate" data-index="${index}">
-          Duplicate
-        </button>
-        <button class="btn btn-delete" data-action="delete" data-index="${index}">
-          Delete
-        </button>
+        <button class="btn btn-duplicate" data-action="duplicate" data-index="${index}">Duplicate</button>
+        <button class="btn btn-delete" data-action="delete" data-index="${index}">Delete</button>
       </td>
     `;
     
@@ -174,6 +185,10 @@ class OptionsController {
       this.renderTemplates();
       
       this.showStatus('Template added successfully');
+
+      // Open modal for immediate editing
+      const newIndex = this.templates.length - 1;
+      this.openTemplateModal(newIndex);
     } catch (error) {
       console.error('Failed to add template:', error);
       this.showStatus(`Failed to add template: ${error.message}`, 'error');
@@ -183,37 +198,7 @@ class OptionsController {
   /**
    * Handle template input changes
    */
-  async handleTemplateInput(event) {
-    const index = parseInt(event.target.dataset.index);
-    const field = event.target.dataset.field;
-    
-    if (isNaN(index) || !field || index >= this.templates.length) return;
-    
-    try {
-      let value = event.target.value;
-      
-      // Parse JSON for variables field
-      if (field === 'variables') {
-        try {
-          value = JSON.parse(value || '[]');
-        } catch (parseError) {
-          // Don't save invalid JSON, just return
-          return;
-        }
-      }
-      
-      // Update template
-      this.templates[index][field] = value;
-      
-      // Save to storage
-      await saveTemplates(this.templates);
-      
-      this.showStatus('Template updated');
-    } catch (error) {
-      console.error('Failed to update template:', error);
-      this.showStatus(`Failed to update template: ${error.message}`, 'error');
-    }
-  }
+  // Inline editing removed; editing handled in modal
 
   /**
    * Handle template actions (delete, duplicate)
@@ -272,10 +257,150 @@ class OptionsController {
       this.renderTemplates();
       
       this.showStatus('Template duplicated successfully');
+      // Open modal for the duplicated one
+      this.openTemplateModal(this.templates.length - 1);
     } catch (error) {
       console.error('Failed to duplicate template:', error);
       this.showStatus(`Failed to duplicate template: ${error.message}`, 'error');
     }
+  }
+
+  // ===== Modal logic =====
+  openTemplateModal(index) {
+    const template = this.templates[index];
+    if (!template) return;
+    this.modal.isOpen = true;
+    this.modal.index = index;
+    this.modal.tmpl = JSON.parse(JSON.stringify(template));
+
+    if (this.elements.modalName) this.elements.modalName.value = template.name || '';
+    if (this.elements.modalBody) this.elements.modalBody.value = template.body || '';
+
+    // Seed variables by key from existing variables
+    const byKey = {};
+    (template.variables || []).forEach(v => {
+      byKey[v.key] = { ...v };
+    });
+    this.modal.varsByKey = byKey;
+    this.refreshModalVariables();
+
+    if (this.elements.modal) this.elements.modal.classList.add('is-open');
+    if (this.elements.modal) this.elements.modal.setAttribute('aria-hidden', 'false');
+  }
+
+  closeTemplateModal() {
+    if (!this.modal.isOpen) return;
+    this.modal.isOpen = false;
+    this.modal.index = null;
+    this.modal.tmpl = null;
+    this.modal.varsByKey = {};
+    if (this.elements.modal) this.elements.modal.classList.remove('is-open');
+    if (this.elements.modal) this.elements.modal.setAttribute('aria-hidden', 'true');
+    if (this.elements.modalVars) this.elements.modalVars.innerHTML = '';
+  }
+
+  refreshModalVariables() {
+    if (!this.elements.modalBody || !this.elements.modalVars) return;
+    const bodyText = this.elements.modalBody.value || '';
+    const keys = extractVariableKeys(bodyText);
+    // Remove stale keys
+    Object.keys(this.modal.varsByKey).forEach(k => { if (!keys.includes(k)) delete this.modal.varsByKey[k]; });
+    // Add missing with defaults
+    keys.forEach(k => {
+      if (!this.modal.varsByKey[k]) {
+        this.modal.varsByKey[k] = { key: k, label: k, placeholder: '', type: 'text', options: [] };
+      }
+    });
+
+    // Render UI
+    this.elements.modalVars.innerHTML = '';
+    keys.forEach(k => {
+      const v = this.modal.varsByKey[k];
+      const wrap = document.createElement('div');
+      wrap.innerHTML = `
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; align-items:end;">
+          <div>
+            <label>Key</label>
+            <input value="${this.escapeHtml(v.key)}" disabled />
+          </div>
+          <div>
+            <label>Label</label>
+            <input data-k="${k}" data-field="label" value="${this.escapeHtml(v.label || k)}" placeholder="Label" />
+          </div>
+          <div>
+            <label>Type</label>
+            <select data-k="${k}" data-field="type">
+              <option value="text" ${v.type === 'select' ? '' : 'selected'}>Text</option>
+              <option value="select" ${v.type === 'select' ? 'selected' : ''}>Select</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:8px;">
+          <div>
+            <label>Placeholder</label>
+            <input data-k="${k}" data-field="placeholder" value="${this.escapeHtml(v.placeholder || '')}" placeholder="Placeholder" />
+          </div>
+          <div class="${v.type === 'select' ? '' : 'hidden'}" data-opts-wrap="${k}">
+            <label>Options (comma-separated)</label>
+            <input data-k="${k}" data-field="options" value="${this.escapeHtml((v.options || []).join(', '))}" placeholder="e.g. Low, Medium, High" />
+          </div>
+        </div>
+      `;
+      this.elements.modalVars.appendChild(wrap);
+    });
+
+    // Bind change handlers
+    this.elements.modalVars.querySelectorAll('input[data-field], select[data-field]').forEach(el => {
+      el.addEventListener('input', (e) => this.onModalVarChange(e));
+      el.addEventListener('change', (e) => this.onModalVarChange(e));
+    });
+  }
+
+  onModalVarChange(event) {
+    const key = event.target.getAttribute('data-k');
+    const field = event.target.getAttribute('data-field');
+    if (!key || !field) return;
+    const v = this.modal.varsByKey[key];
+    if (!v) return;
+    let value = event.target.value;
+    if (field === 'type') {
+      v.type = value === 'select' ? 'select' : 'text';
+      // Toggle options wrap visibility
+      const wrap = this.elements.modalVars.querySelector(`[data-opts-wrap="${key}"]`);
+      if (wrap) wrap.classList.toggle('hidden', v.type !== 'select');
+      return;
+    }
+    if (field === 'options') {
+      v.options = value.split(',').map(s => s.trim()).filter(Boolean);
+      return;
+    }
+    v[field] = value;
+  }
+
+  async saveTemplateFromModal() {
+    if (this.modal.index == null) return;
+    const idx = this.modal.index;
+    const orig = this.templates[idx];
+    const name = this.elements.modalName?.value?.trim() || '';
+    const body = this.elements.modalBody?.value || '';
+    const variables = Object.values(this.modal.varsByKey);
+    try {
+      const updated = await updateTemplate(orig.id, { name, body, variables });
+      this.templates[idx] = updated;
+      this.renderTemplates();
+      this.showStatus('Template saved', 'success');
+      this.closeTemplateModal();
+    } catch (error) {
+      console.error('Failed to save template:', error);
+      this.showStatus(`Failed to save template: ${error.message}`, 'error');
+    }
+  }
+
+  async deleteTemplateFromModal() {
+    if (this.modal.index == null) return;
+    const idx = this.modal.index;
+    await this.deleteTemplate(idx);
+    this.closeTemplateModal();
   }
 
   /**
